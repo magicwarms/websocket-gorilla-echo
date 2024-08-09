@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -34,7 +35,25 @@ func main() {
 
 		socketCon.On("offer", func(data ...any) {
 			socketID := socketCon.Id()
-			offer := fmt.Sprint(data[0])
+
+			type Offer struct {
+				SDP  string `json:"sdp"`
+				Type string `json:"type"`
+			}
+			
+			offerMap, ok := data[0].(map[string]interface{})
+			if !ok {
+				fmt.Println("Error: offer data is not in the correct format")
+				return
+			}
+
+			offerJSON, err := json.Marshal(offerMap)
+			if err != nil {
+				fmt.Printf("Error marshalling offer to JSON (offerJSON): %v\n", err)
+				return
+			}
+
+			offer := string(offerJSON)
 			targetedSocketID := fmt.Sprint(data[1])
 			fmt.Printf("Offer received on server from %s to be able to send to %s in offer (%s)  \n", socketID, targetedSocketID, offer)
 
@@ -43,7 +62,19 @@ func main() {
 
 		socketCon.On("answer", func(data ...any) {
 			socketID := socketCon.Id()
-			answer := fmt.Sprint(data[0])
+			answerMap, ok := data[0].(map[string]interface{})
+			if !ok {
+				fmt.Println("Error: answer data is not in the correct format")
+				return
+			}
+
+			answerJSON, err := json.Marshal(answerMap)
+			if err != nil {
+				fmt.Printf("Error marshalling offer to JSON (answerJSON): %v\n", err)
+				return
+			}
+
+			answer := string(answerJSON)
 			targetedSocketID := fmt.Sprint(data[1])
 			fmt.Printf("Answer received on server to be able to send to %s in answer (%s)  \n", targetedSocketID, answer)
 
@@ -52,7 +83,20 @@ func main() {
 
 		socketCon.On("ice-candidate", func(data ...any) {
 			socketID := socketCon.Id()
-			iceCandidate := fmt.Sprint(data[0])
+
+			iceCandidateMap, ok := data[0].(map[string]interface{})
+			if !ok {
+				fmt.Println("Error: iceCandidate data is not in the correct format")
+				return
+			}
+
+			iceCandidateJSON, err := json.Marshal(iceCandidateMap)
+			if err != nil {
+				fmt.Printf("Error marshalling offer to JSON (iceCandidateJSON): %v\n", err)
+				return
+			}
+
+			iceCandidate := string(iceCandidateJSON)
 			targetedSocketID := fmt.Sprint(data[1])
 			fmt.Printf("Ice candidate received on server to be able to send to %s in iceCandidate (%s) \n", targetedSocketID, iceCandidate)
 
@@ -115,8 +159,7 @@ func main() {
 
 	})
 
-
-	echoApp.Use(middleware.Logger())
+	// echoApp.Use(middleware.Logger())
 	echoApp.Use(middleware.Recover())
 
 	echoApp.Use(corsMiddleware)
@@ -144,7 +187,6 @@ func main() {
 	echoApp.Close()
 	os.Exit(0)
 }
-
 
 func corsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return middleware.CORSWithConfig(middleware.CORSConfig{

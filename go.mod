@@ -4,7 +4,11 @@ go 1.22.2
 
 toolchain go1.22.5
 
-require github.com/labstack/echo/v4 v4.12.0
+require (
+	github.com/goccy/go-json v0.10.3
+	github.com/labstack/echo/v4 v4.12.0
+	github.com/valyala/fastjson v1.6.4
+)
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
